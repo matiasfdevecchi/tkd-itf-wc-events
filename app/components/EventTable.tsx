@@ -14,7 +14,7 @@ export default function EventTable({ events }: EventTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('StartDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [timezone, setTimezone] = useState<string>('America/Argentina/Buenos_Aires');
-  const [hidePastEvents, setHidePastEvents] = useState<boolean>(false);
+  const [timeFilter, setTimeFilter] = useState<'all' | 'live' | 'upcoming' | 'past'>('all');
   const [filters, setFilters] = useState({
     type: '',
     date: '',
@@ -57,14 +57,25 @@ export default function EventTable({ events }: EventTableProps) {
         dateMatch = eventDate.toDateString() === filterDate.toDateString();
       }
 
-      // Filtrar eventos pasados si el toggle está activado
-      let notPastEvent = true;
-      if (hidePastEvents) {
+      // Filtrar por tiempo según el selector
+      let timeMatch = true;
+      if (timeFilter !== 'all') {
+        const eventStartDate = new Date(event.StartDate);
         const eventEndDate = new Date(event.EndDate);
-        notPastEvent = eventEndDate >= now;
+
+        if (timeFilter === 'live') {
+          // Solo eventos en vivo ahora
+          timeMatch = eventStartDate <= now && eventEndDate >= now;
+        } else if (timeFilter === 'upcoming') {
+          // Eventos próximos (incluye en vivo y futuros)
+          timeMatch = eventEndDate >= now;
+        } else if (timeFilter === 'past') {
+          // Solo eventos pasados
+          timeMatch = eventEndDate < now;
+        }
       }
 
-      return typeMatch && categoryMatch && dateMatch && notPastEvent;
+      return typeMatch && categoryMatch && dateMatch && timeMatch;
     });
 
     return filtered.sort((a, b) => {
@@ -75,7 +86,7 @@ export default function EventTable({ events }: EventTableProps) {
       if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [events, filters, sortKey, sortDirection, hidePastEvents]);
+  }, [events, filters, sortKey, sortDirection, timeFilter]);
 
   const formatDate = (dateStr: string) => {
     try {
@@ -173,19 +184,50 @@ export default function EventTable({ events }: EventTableProps) {
           </div>
         </div>
 
-        {/* Checkbox para ocultar eventos pasados y botón limpiar filtros */}
-        <div className="mt-4 flex items-center justify-between">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={hidePastEvents}
-              onChange={(e) => setHidePastEvents(e.target.checked)}
-              className="w-5 h-5 bg-neutral-800 border-neutral-600 rounded cursor-pointer accent-neutral-500"
-            />
-            <span className="text-sm font-semibold text-neutral-300 uppercase tracking-wider">
-              Ocultar eventos pasados
-            </span>
-          </label>
+        {/* Filtro de tiempo y botón limpiar */}
+        <div className="mt-4 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setTimeFilter('all')}
+              className={`px-4 py-2 font-semibold rounded-md transition-all duration-200 ${
+                timeFilter === 'all'
+                  ? 'bg-neutral-600 text-white'
+                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+              }`}
+            >
+              Todos
+            </button>
+            <button
+              onClick={() => setTimeFilter('live')}
+              className={`px-4 py-2 font-semibold rounded-md transition-all duration-200 ${
+                timeFilter === 'live'
+                  ? 'bg-green-700 text-white'
+                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+              }`}
+            >
+              🔴 En Vivo
+            </button>
+            <button
+              onClick={() => setTimeFilter('upcoming')}
+              className={`px-4 py-2 font-semibold rounded-md transition-all duration-200 ${
+                timeFilter === 'upcoming'
+                  ? 'bg-blue-700 text-white'
+                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+              }`}
+            >
+              Próximos
+            </button>
+            <button
+              onClick={() => setTimeFilter('past')}
+              className={`px-4 py-2 font-semibold rounded-md transition-all duration-200 ${
+                timeFilter === 'past'
+                  ? 'bg-neutral-600 text-white'
+                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+              }`}
+            >
+              Pasados
+            </button>
+          </div>
 
           {(filters.type || filters.date || filters.category) && (
             <button
