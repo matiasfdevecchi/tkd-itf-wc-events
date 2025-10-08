@@ -46,7 +46,7 @@ export default function EventTable({ events }: EventTableProps) {
   const filteredAndSortedEvents = useMemo(() => {
     const now = new Date();
 
-    let filtered = events.filter((event) => {
+    const filtered = events.filter((event) => {
       const typeMatch = !filters.type || event.Type === filters.type;
       const categoryMatch = event.CategoryDescription.toLowerCase().includes(filters.category.toLowerCase());
 

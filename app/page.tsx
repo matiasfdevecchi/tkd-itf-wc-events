@@ -8,7 +8,6 @@ async function getEvents(): Promise<Event[]> {
   const fileContent = await fs.readFile(filePath, 'utf-8');
 
   const lines = fileContent.trim().split('\n');
-  const headers = lines[0].split(',');
 
   const events: Event[] = lines.slice(1).map((line) => {
     const values = line.split(',');
